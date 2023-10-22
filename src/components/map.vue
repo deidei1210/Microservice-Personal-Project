@@ -15,18 +15,17 @@
         :dragging="false"
         @click="infoWindowOpen(index)"
       >
-      <bm-label
-        :content="marker.content"
-        :labelStyle="{ color: 'red', fontSize: '15px' }"
-        :offset="{ width: -35, height: 30 }"
-      ></bm-label>   
-      
+        <bm-label
+          :content="marker.content"
+          :labelStyle="{ color: 'red', fontSize: '15px' }"
+          :offset="{ width: -35, height: 30 }"
+        ></bm-label>
       </bm-marker>
 
       <div class="zoom-controls">
-          <button @click="zoomIn">放大</button>
-          <button @click="zoomOut">缩小</button>
-        </div>
+        <button @click="zoomIn">放大</button>
+        <button @click="zoomOut">缩小</button>
+      </div>
     </baidu-map>
   </div>
 </template>
@@ -40,9 +39,11 @@ import {
   BmBoundary,
   BmScale,
   BmMarker,
-  BmLabel
+  BmLabel,
 } from "vue-baidu-map-3x";
 import { ref, onMounted } from "vue";
+import axios from "axios";
+
 export default {
   components: {
     BaiduMap,
@@ -51,7 +52,7 @@ export default {
     BmBoundary,
     BmScale,
     BmMarker,
-    BmLabel
+    BmLabel,
   },
   data() {
     return {
@@ -95,7 +96,7 @@ export default {
           show: false,
         },
         {
-          position: { lng: 121.4830, lat: 31.2342},
+          position: { lng: 121.483, lat: 31.2342 },
           content: "上海博物馆",
           show: false,
         },
@@ -115,7 +116,7 @@ export default {
           show: false,
         },
         {
-          position: { lng: 121.4449, lat: 31.2110 },
+          position: { lng: 121.4449, lat: 31.211 },
           content: "武康大楼",
           show: false,
         },
@@ -185,12 +186,12 @@ export default {
           show: false,
         },
         {
-          position: { lng: 121.4900, lat: 31.2711 },
+          position: { lng: 121.49, lat: 31.2711 },
           content: "甜爱路",
           show: false,
         },
         {
-          position: { lng: 121.4880, lat: 31.2696 },
+          position: { lng: 121.488, lat: 31.2696 },
           content: "多伦路文化名人街",
           show: false,
         },
@@ -225,7 +226,14 @@ export default {
           show: false,
         },
       ],
+      weatherData: null,
+      city: "310000", //上海
     };
+  },
+  created() {
+    this.getWeatherData();
+    this.searchWiki("上海");
+    console.log(this.weatherData);
   },
   methods: {
     //通过点击地图上的点获得该点具体的地点名称
@@ -257,13 +265,53 @@ export default {
       this.zoom -= 1; // 缩小地图缩放级别
       // this.$refs.baiduMap.setZoom(this.zoom); // 调用 setZoom 方法更新地图缩放级别
     },
+    //调用天气api，已经可以调取成功
+    getWeatherData() {
+      const key = "	3f6157ccb2e4ec191a030932e211ffaa"; // 将 `your key` 替换成你的高德开发者key
+      const url = `https://restapi.amap.com/v3/weather/weatherInfo?key=${key}&city=${this.city}`;
+      console.log("获取天气");
+      axios
+        .get(url)
+        .then((response) => {
+          if (response.status === 200) {
+            this.weatherData = response.data;
+            console.log(response.data);
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    },
+    async searchWiki(keyword) {
+      try{
+        const response=await axios.get('https://zh.wikipedia.org/w/api.php',{
+          params:{
+            format:'json',
+            action:'query',
+            generator:'search',
+            gsrnamespace:0,
+            gsrlimit:10,
+            prop:'pageimages|extracts',
+            pilimit:'max',
+            exintro:true,
+            explaintext:true,
+            exsentences:1,
+            exlimit:'max',
+            origin:'*',
+            gsrsearch:"上海南京东路"
+          }
+        });
+        console.log(response.data.query.pages);
+      }catch(error){
+        console.error('Error:',error);
+      }
+    },
   },
 };
 </script>
 
 <style>
 .map {
-  
   width: 70%;
   height: 950px;
 }
