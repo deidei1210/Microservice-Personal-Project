@@ -2,14 +2,16 @@
   <div class="map-weather-container">
     <!-- 用于显示地图 -->
     <div class="map">
-      <baidu-map class="map" :center="{ lng: 121.474, lat: 31.23 }" :zoom="zoom" :scroll-wheel-zoom=true
-        @click="handleMapClick">
+      <baidu-map class="map" :center="center" :zoom="zoom" :scroll-wheel-zoom=true @click="handleMapClick">
+
         <!-- 给特殊地点加上一些标注和说明 -->
         <bm-marker v-for="(marker, index) in markers" :key="index" :position="marker.position" :dragging="false"
           @click="handleMarkerClick(marker, index)">
           <bm-label :content="marker.content" :labelStyle="{ color: 'red', fontSize: '15px' }"
             :offset="{ width: -35, height: 30 }"></bm-label>
         </bm-marker>
+        <!-- 地图类型切换 -->
+        <!-- <bm-map-type :map-types="['BMAP_NORMAL_MAP', 'BMAP_HYBRID_MAP']" anchor="BMAP_ANCHOR_TOP_LEFT"></bm-map-type> -->
 
         <div class="zoom-controls">
           <button @click="zoomIn">放大</button>
@@ -23,7 +25,8 @@
         </div>
 
         <!-- 步行路线 -->
-        <!-- <bm-walking start="上海市虹口区高阳路640号" end="上海市黄浦区宁波路518号" endCity="上海" :auto-viewport="true"></bm-walking> -->
+        <bm-walking v-if="planRoute" :start="startPosition" :end="endPosition" location="上海" :auto-viewport="true"
+          :selectFirstResult="true" :panel="true"></bm-walking>
         <!-- 公交线路查询 -->
         <!-- <bm-bus keyword="123路公交车" :auto-viewport="true" location="上海"></bm-bus> -->
       </baidu-map>
@@ -36,7 +39,7 @@
         <!-- 显示天气部分的title -->
         <div class="weather-header">
           <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
-            {{ weatherData.lives[0].city }}实时天气
+            {{ weatherData.lives[0].city }}实时天气☁️
             <span style="color: #aaa; font-size: 16px; font-weight: normal">
               {{ weatherData.lives[0].reporttime }}
             </span>
@@ -73,7 +76,7 @@
         <!-- 显示wiki部分的title -->
         <div class="weather-header">
           <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
-            景点介绍百科
+            景点介绍百科🔍
             <span style="color: #aaa; font-size: 16px; font-weight: normal">
               下面是对“{{ searchPlace }}"的搜索结果
             </span>
@@ -99,10 +102,22 @@
         <!-- 显示wiki部分的title -->
         <div class="weather-header">
           <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
-            路线规划
+            路线规划🚗
           </p>
         </div>
-
+        <div>
+          <div style="display:inline-block;">当前选中地址：{{ clickAddress }}</div>
+          <button @click="setStartPlace" style="display:inline-block;margin-left:10px;">设置为起点</button>
+          <button @click="setEndPlace" style="display:inline-block;margin-left:10px;">设置为终点</button>
+          <div>起点：<span v-if="startPlace">{{ startPlace }}</span>
+            <span v-else>未选择起点</span>
+          </div>
+          <div>终点：<span v-if="endPlace">{{ endPlace }}</span>
+            <span v-else>未选择终点</span>
+          </div>
+          <button @click="PlanRoute">开始规划</button>
+          <button @click="StopPlanRoute">重新设置</button>
+        </div>
       </div>
     </div>
   </div>
@@ -119,7 +134,6 @@ import {
   BmMarker,
   BmLabel,
   BmLocalSearch,
-  // BmView,
   BmCircle,
   BmBus
 } from "vue-baidu-map-3x";
@@ -137,7 +151,6 @@ export default {
     BmMarker,
     BmLabel,
     BmLocalSearch,
-    // BmView,
     BmCircle,
     BmBus
   },
@@ -324,7 +337,7 @@ export default {
       //点击获取点击地点的经度和纬度
       clickLat: 31.23,
       clickLng: 121.474,
-      clickAddress: "上海市",
+      clickAddress: "上海市杨浦区四平路1239号",
 
       //设置搜索范围
       nearby: {
@@ -334,7 +347,14 @@ export default {
         },
         radius: 10000
       },
-      placeKeyword: ""
+      placeKeyword: "",
+      startPlace: "",
+      startPosition: null,
+
+      endPlace: "",
+      endPosition: null,
+
+      planRoute: false,
     };
   },
   watch: {
@@ -387,6 +407,32 @@ export default {
     zoomOut() {
       this.zoom -= 1; // 缩小地图缩放级别
       // this.$refs.baiduMap.setZoom(this.zoom); // 调用 setZoom 方法更新地图缩放级别
+    },
+
+    //设置为起点
+    setStartPlace() {
+      this.startPlace = this.clickAddress
+      this.startPosition = { lat: this.clickLat, lng: this.clickLng }
+    },
+
+    //设置为终点
+    setEndPlace() {
+      this.endPlace = this.clickAddress
+      this.endPosition = { lat: this.clickLat, lng: this.clickLng }
+
+    },
+    PlanRoute() {
+      if (this.startPlace != "" && this.endPlace != "")
+        this.planRoute = true
+      else {
+        // 弹窗提醒用户设置起点和终点
+        alert("请设置起点和终点");
+      }
+    },
+    StopPlanRoute() {
+      this.planRoute = false
+      this.startPlace = ""
+      this.endPlace = ""
     },
     //调用天气api，已经可以调取成功
     getWeatherData() {
@@ -667,8 +713,8 @@ export default {
 .showAddress {
   background-color: #fff;
   position: absolute;
-  /* top: 850px; */
-  left: 550px;
+  top: 50px;
+  left: 10px;
   z-index: 9999;
   /* height:100px; */
   /* width: 400px; */
