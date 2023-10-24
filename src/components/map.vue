@@ -55,26 +55,31 @@
           </div>
         </div>
       </div>
+
       <!-- 用于显示维基百科查询结果 -->
       <div class="wiki-search">
-        <!-- 显示天气部分的title -->
+        <!-- 显示wiki部分的title -->
         <div class="weather-header">
           <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
             景点介绍百科
+            <span style="color: #aaa; font-size: 16px; font-weight: normal">
+              下面是对“{{ searchPlace }}"的搜索结果
+            </span>
           </p>
-          <div class="searchresult">
-            <div v-for="page in WikiPage" :key="page.title">
-              <div class="page-item">
-                <!-- <img :src="page.thumbnail.source" :alt="page.title" /> -->
-                <div class="page-content">
-                  <a :href="page.title" target="_blank">{{ page.title }}</a>
-                  <p>{{ page.extract }}</p>
-                </div>
+        </div>
+
+        <!-- 显示搜索结果 -->
+        <div class="searchresult">
+          <div v-for="page in WikiPage" :key="page.title">
+            <div class="page-item">
+              <img v-if="page.thumbnail && page.thumbnail.source" :src="page.thumbnail.source" :alt="page.title" />
+              <div class="page-content">
+                <a :href="page.url" target="_blank">{{ page.title }}</a>
+                <p>{{ page.extract }}</p>
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   </div>
@@ -283,6 +288,7 @@ export default {
       selectedMarkerIndex: -1, // 记录选中的标记索引
       dialogBox: "点击下面的按钮以获得智能小助手建议～",
       WikiPage: [], // 新添加的空数组
+      searchPlace:"上海",
     };
   },
   watch: {
@@ -377,9 +383,10 @@ export default {
             title: page.title,
             thumbnail: page.thumbnail,
             extract: page.extract,
+            url: ""
           };
           // 将title拼接成访问中文维基百科的链接
-          wikiPage.title = "http://zh.wikipedia.org/wiki/" + encodeURIComponent(page.title);
+          wikiPage.url = "http://zh.wikipedia.org/wiki/" + encodeURIComponent(page.title);
           wikiPages.push(wikiPage);
         }
         this.WikiPage = wikiPages;
@@ -393,10 +400,11 @@ export default {
       console.log("点击了" + index);
       const details = this.markers[index].content;
       console.log(details);
+      this.searchPlace=details;
       //调用Wiki的接口
       var href = this.searchWiki(details);
       //调用GPT接口
-      this.initGPT3(details);
+      // this.initGPT3(details);
     },
 
     //点击穿衣按钮之后获取穿衣建议
@@ -582,4 +590,25 @@ export default {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 
 }
-</style>
+
+.searchresult {
+  max-height: 210px;
+  /* 设置最大高度 */
+  overflow: auto;
+  /* 当内容超出高度时显示滚动条 */
+  margin:0px 20px 0px 20px;
+}
+
+.page-item {
+  display: flex;
+}
+
+.page-item img {
+  width: 100px;
+  height: 100px;
+  margin-right: 10px;
+}
+
+.page-content {
+  flex: 1;
+}</style>
