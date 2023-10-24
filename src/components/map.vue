@@ -2,7 +2,8 @@
   <div class="map-weather-container">
     <!-- 用于显示地图 -->
     <div class="map">
-      <baidu-map class="map" :center="{ lng: 121.474, lat: 31.23 }" :zoom="zoom" @click="handleMapClick">
+      <baidu-map class="map" :center="{ lng: 121.474, lat: 31.23 }" :zoom="zoom" :scroll-wheel-zoom=true
+        @click="handleMapClick">
         <!-- 给特殊地点加上一些标注和说明 -->
         <bm-marker v-for="(marker, index) in markers" :key="index" :position="marker.position" :dragging="false"
           @click="handleMarkerClick(marker, index)">
@@ -14,6 +15,17 @@
           <button @click="zoomIn">放大</button>
           <button @click="zoomOut">缩小</button>
         </div>
+        <!-- 显示当前用户点击的地点的经纬度 -->
+        <div class="showAddress">
+          <div>纬度：{{ clickLat }}</div>
+          <div>经度：{{ clickLng }}</div>
+          <div>地址：{{ clickAddress }}</div>
+        </div>
+
+        <!-- 步行路线 -->
+        <!-- <bm-walking start="上海市虹口区高阳路640号" end="上海市黄浦区宁波路518号" endCity="上海" :auto-viewport="true"></bm-walking> -->
+        <!-- 公交线路查询 -->
+        <!-- <bm-bus keyword="123路公交车" :auto-viewport="true" location="上海"></bm-bus> -->
       </baidu-map>
     </div>
 
@@ -75,11 +87,22 @@
               <img v-if="page.thumbnail && page.thumbnail.source" :src="page.thumbnail.source" :alt="page.title" />
               <div class="page-content">
                 <a :href="page.url" target="_blank">{{ page.title }}</a>
-                <p>{{ page.extract }}</p>
+                <p style="font-size: small;">{{ page.extract }}</p>
               </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- 地图导航 -->
+      <div class="guide-container">
+        <!-- 显示wiki部分的title -->
+        <div class="weather-header">
+          <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
+            路线规划
+          </p>
+        </div>
+
       </div>
     </div>
   </div>
@@ -95,6 +118,10 @@ import {
   BmScale,
   BmMarker,
   BmLabel,
+  BmLocalSearch,
+  // BmView,
+  BmCircle,
+  BmBus
 } from "vue-baidu-map-3x";
 import { ref, onMounted } from "vue";
 import axios from "axios";
@@ -109,11 +136,15 @@ export default {
     BmScale,
     BmMarker,
     BmLabel,
+    BmLocalSearch,
+    // BmView,
+    BmCircle,
+    BmBus
   },
 
   data() {
     return {
-      center: { lat: 39.9, lng: 116.4 },
+      center: { lat: 31.23, lng: 121.474 },
       zoom: 15,
       //一些景点坐标点
       markers: [
@@ -288,7 +319,22 @@ export default {
       selectedMarkerIndex: -1, // 记录选中的标记索引
       dialogBox: "点击下面的按钮以获得智能小助手建议～",
       WikiPage: [], // 新添加的空数组
-      searchPlace:"上海",
+      searchPlace: "上海",
+
+      //点击获取点击地点的经度和纬度
+      clickLat: 31.23,
+      clickLng: 121.474,
+      clickAddress: "上海市",
+
+      //设置搜索范围
+      nearby: {
+        center: {
+          lng: 121.474,
+          lat: 31.23
+        },
+        radius: 10000
+      },
+      placeKeyword: ""
     };
   },
   watch: {
@@ -320,6 +366,10 @@ export default {
           const address = result.address; // 地名
           const lng = result.point.lng; // 经度
           const lat = result.point.lat; // 纬度
+
+          this.clickLat = lat;
+          this.clickLng = lng;
+          this.clickAddress = address;
 
           // 处理获取到的地名、经纬度数据
           console.log("地名:", address);
@@ -400,7 +450,7 @@ export default {
       console.log("点击了" + index);
       const details = this.markers[index].content;
       console.log(details);
-      this.searchPlace=details;
+      this.searchPlace = details;
       //调用Wiki的接口
       var href = this.searchWiki(details);
       //调用GPT接口
@@ -596,11 +646,12 @@ export default {
   /* 设置最大高度 */
   overflow: auto;
   /* 当内容超出高度时显示滚动条 */
-  margin:0px 20px 0px 20px;
+  margin: 0px 20px 0px 20px;
 }
 
 .page-item {
   display: flex;
+  margin-top: 10px;
 }
 
 .page-item img {
@@ -611,4 +662,29 @@ export default {
 
 .page-content {
   flex: 1;
-}</style>
+}
+
+.showAddress {
+  background-color: #fff;
+  position: absolute;
+  /* top: 850px; */
+  left: 550px;
+  z-index: 9999;
+  /* height:100px; */
+  /* width: 400px; */
+}
+
+.guide-container {
+  width: 96%;
+  height: 283px;
+  margin-top: 20px;
+  top: 10px;
+  left: 10px;
+  z-index: 9999;
+  background-color: #b0e2ff;
+  /* 设置背景颜色为浅蓝色 */
+  border-radius: 10px;
+  /* 设置圆角边框半径为10px */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+</style>
