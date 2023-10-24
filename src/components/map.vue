@@ -32,6 +32,7 @@
 
     <!-- 用于显示天气 -->
     <div class="weather-container" v-if="weatherData">
+      <!-- 显示天气部分的title -->
       <div class="weather-header">
         <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
           {{ weatherData.lives[0].city }}实时天气
@@ -40,12 +41,25 @@
           </span>
         </p>
       </div>
-      <div class="weather-details">
-        <p>温度🌡️：{{ weatherData.lives[0].temperature }}°C</p>
-        <p>天气☁️：{{ weatherData.lives[0].weather }}</p>
-        <p>湿度💧：{{ weatherData.lives[0].humidity }}%</p>
-        <p>风向🌬：{{ weatherData.lives[0].winddirection }}风</p>
-        <p>风力💨：{{ weatherData.lives[0].windpower }}级</p>
+      <!-- 天气的具体信息+出行建议 -->
+      <div class="weather-details-container">
+        <!-- 显示天气的具体信息 -->
+        <div class="weather-details">
+          <p>温度🌡️：{{ weatherData.lives[0].temperature }}°C</p>
+          <p>天气☁️：{{ weatherData.lives[0].weather }}</p>
+          <p>湿度💧：{{ weatherData.lives[0].humidity }}%</p>
+          <p>风向🌬：{{ weatherData.lives[0].winddirection }}风</p>
+          <p>风力💨：{{ weatherData.lives[0].windpower }}级</p>
+        </div>
+        <!-- 显示具体的出行建议 -->
+        <div>
+          <!-- title -->
+          <div style="font-size: 18px; font-weight: bold;">出行智能小助手</div>
+          <div class="weather-dialog-box">
+            
+          </div>
+
+        </div>
       </div>
     </div>
   </div>
@@ -76,6 +90,7 @@ export default {
     BmMarker,
     BmLabel,
   },
+
   data() {
     return {
       center: { lat: 39.9, lng: 116.4 },
@@ -253,16 +268,37 @@ export default {
       selectedMarkerIndex: -1, // 记录选中的标记索引
     };
   },
+
+  watch: {
+    weatherData(newData) {
+      console.log(newData);
+      // 在这里执行你希望在 weatherData 更新后立即执行的逻辑
+      // console.log(this.weatherData);
+      const details =
+        "已知今天上海的天气数据如下所示：" +
+        "湿度：" +
+        this.weatherData.lives[0].humidity +
+        "，温度：" +
+        this.weatherData.lives[0].temperature +
+        "，天气：" +
+        this.weatherData.lives[0].weather +
+        "，风力：" +
+        this.weatherData.lives[0].windpower +
+        "，请问可以分别从穿衣，出行方式，游乐目的地等角度给出出行建议吗？（用可爱俏皮的语句直接生成一段话，50到100字左右，不要列出一点一点的）";
+      console.log(details);
+      // this.initGPT3(details);
+    },
+  },
+
   created() {
     this.getWeatherData();
-    // this.searchWiki("上海");
-    console.log(this.weatherData);
-    // this.initGPT3();
   },
+
   mounted() {
     this.mapInstance = this.$refs.map ? this.$refs.map.getMap() : null;
-    this.getWeatherData();
+    // this.getWeatherData();
   },
+
   methods: {
     //通过点击地图上的点获得该点具体的地点名称
     handleMapClick(event) {
@@ -348,7 +384,7 @@ export default {
       this.initGPT3(details);
     },
     async initGPT3(details) {
-      const API_KEY = "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"; //输入API Key
+      const API_KEY = "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"; //输入API Key
       const openai = new OpenAI({
         apiKey: API_KEY,
         dangerouslyAllowBrowser: true,
@@ -358,7 +394,7 @@ export default {
         messages: [
           {
             role: "user",
-            content: `你好，请问可以给我介绍一下上海的 ${details} 吗？用200个字概括！`,
+            content: `你好，${details}`,
           },
         ],
         model: "gpt-3.5-turbo",
@@ -366,7 +402,7 @@ export default {
       console.log(chatCompletion);
       console.log(chatCompletion.choices[0].message.content);
     },
-  },
+  }
 };
 </script>
 
@@ -402,11 +438,24 @@ export default {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 设置阴影效果 */
   /* 添加其他样式 */
 }
-.weather-header{
+.weather-header {
   margin-left: 28px;
   margin-right: 28px;
 }
 .weather-details {
+  grid-column: 1 / 2; /* 将details容器放在第一列 */
   margin-left: 28px;
+}
+.weather-details-container {
+  display: grid;
+  grid-template-columns: 1fr 3fr; /* 将屏幕分为四份，第一列占据一个份额，第二列占据三个份额 */
+}
+.weather-dialog-box{
+  width: 94%;
+  height:110px;
+  margin-top:10px;
+  background-color: whitesmoke;
+  border-radius:6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 设置阴影效果 */
 }
 </style>
