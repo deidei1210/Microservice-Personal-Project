@@ -2,25 +2,12 @@
   <div class="map-weather-container">
     <!-- 用于显示地图 -->
     <div class="map">
-      <baidu-map
-        class="map"
-        :center="{ lng: 121.474, lat: 31.23 }"
-        :zoom="zoom"
-        @click="handleMapClick"
-      >
+      <baidu-map class="map" :center="{ lng: 121.474, lat: 31.23 }" :zoom="zoom" @click="handleMapClick">
         <!-- 给特殊地点加上一些标注和说明 -->
-        <bm-marker
-          v-for="(marker, index) in markers"
-          :key="index"
-          :position="marker.position"
-          :dragging="false"
-          @click="handleMarkerClick(marker, index)"
-        >
-          <bm-label
-            :content="marker.content"
-            :labelStyle="{ color: 'red', fontSize: '15px' }"
-            :offset="{ width: -35, height: 30 }"
-          ></bm-label>
+        <bm-marker v-for="(marker, index) in markers" :key="index" :position="marker.position" :dragging="false"
+          @click="handleMarkerClick(marker, index)">
+          <bm-label :content="marker.content" :labelStyle="{ color: 'red', fontSize: '15px' }"
+            :offset="{ width: -35, height: 30 }"></bm-label>
         </bm-marker>
 
         <div class="zoom-controls">
@@ -56,9 +43,13 @@
           <!-- title -->
           <div style="font-size: 18px; font-weight: bold;">出行智能小助手</div>
           <div class="weather-dialog-box">
-            
+            <div class="dialog-content">{{ dialogBox }}</div>
           </div>
-
+          <!-- 添加按钮 -->
+          <button id="dress-advice-btn" @click="getDressAdvice">穿衣建议</button>
+          <button id="travel-advice-btn" @click="getTravelAdvice">出行建议</button>
+          <button id="weather-summary-btn" @click="getWeatherSummary">天气概述</button>
+          <!-- 对话框 -->
         </div>
       </div>
     </div>
@@ -266,30 +257,16 @@ export default {
       weatherData: null, //存储天气数据
       city: "310000", //上海
       selectedMarkerIndex: -1, // 记录选中的标记索引
+      dialogBox: "点击下面的按钮以获得智能小助手建议～"
     };
   },
-
   watch: {
     weatherData(newData) {
       console.log(newData);
       // 在这里执行你希望在 weatherData 更新后立即执行的逻辑
       // console.log(this.weatherData);
-      const details =
-        "已知今天上海的天气数据如下所示：" +
-        "湿度：" +
-        this.weatherData.lives[0].humidity +
-        "，温度：" +
-        this.weatherData.lives[0].temperature +
-        "，天气：" +
-        this.weatherData.lives[0].weather +
-        "，风力：" +
-        this.weatherData.lives[0].windpower +
-        "，请问可以分别从穿衣，出行方式，游乐目的地等角度给出出行建议吗？（用可爱俏皮的语句直接生成一段话，50到100字左右，不要列出一点一点的）";
-      console.log(details);
-      // this.initGPT3(details);
     },
   },
-
   created() {
     this.getWeatherData();
   },
@@ -383,8 +360,65 @@ export default {
       //调用GPT接口
       this.initGPT3(details);
     },
-    async initGPT3(details) {
-      const API_KEY = "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"; //输入API Key
+
+    //点击穿衣按钮之后获取穿衣建议
+    getDressAdvice() {
+      const details =
+        "已知今天上海的天气数据如下所示：" +
+        "湿度：" +
+        this.weatherData.lives[0].humidity +
+        "，温度：" +
+        this.weatherData.lives[0].temperature +
+        "，天气：" +
+        this.weatherData.lives[0].weather +
+        "，风力：" +
+        this.weatherData.lives[0].windpower +
+        "，请问可以给出穿衣建议吗？比如说今天适合穿什么样的衣服？比如如果温度高于25度就适合穿短袖，如果温度在17到25之间左右就可以穿衬衫等等（用可爱俏皮的语句直接生成一段话，50到80字左右，不要列出一点一点的，也不要太长）";
+      console.log(details);
+      this.initGPT3(details, 1);
+      this.showResponse();
+    },
+    //点击出行按钮之后获取出行建议
+    getTravelAdvice() {
+      const details =
+        "已知今天上海的天气数据如下所示：" +
+        "湿度：" +
+        this.weatherData.lives[0].humidity +
+        "，温度：" +
+        this.weatherData.lives[0].temperature +
+        "，天气：" +
+        this.weatherData.lives[0].weather +
+        "，风力：" +
+        this.weatherData.lives[0].windpower +
+        "，请问可以给出出行建议吗？就根据我给你的上海目前的天气信息给出，比如说如果今天下雨就建议打车或者地铁，如果今天天晴就建议骑自行车或者走路，如果风大就尽量不要骑车等等。（用可爱俏皮的语句直接生成一段话，50到80字左右，不要列出一点一点的，也不要太长）";
+      console.log(details);
+      this.initGPT3(details, 1);
+      this.showResponse();
+    },
+    //点击天气概述按钮之后获取天气概述
+    getWeatherSummary() {
+      const details =
+        "已知今天上海的天气数据如下所示：" +
+        "湿度：" +
+        this.weatherData.lives[0].humidity +
+        "，温度：" +
+        this.weatherData.lives[0].temperature +
+        "，天气：" +
+        this.weatherData.lives[0].weather +
+        "，风力：" +
+        this.weatherData.lives[0].windpower +
+        "，请你用可爱俏皮的语句，同时写一首唐诗来描述今天的天气，这首诗需要包含今天的天气特点以及人们的活动，景色等等";
+      console.log(details);
+      this.initGPT3(details, 1);
+      this.showResponse();
+    },
+    showResponse() {
+      // 将回复显示在对话框中
+      this.dialogBox = "正在生成中......";
+    },
+
+    async initGPT3(details, choice) {
+      const API_KEY = "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"; //输入API Key
       const openai = new OpenAI({
         apiKey: API_KEY,
         dangerouslyAllowBrowser: true,
@@ -401,7 +435,16 @@ export default {
       });
       console.log(chatCompletion);
       console.log(chatCompletion.choices[0].message.content);
+      // 说明此时是在生成智能出行小助手
+      if (choice == 1) {
+        //显示在消息框内
+        this.dialogBox = chatCompletion.choices[0].message.content;
+      }
+      else {
+
+      }
     },
+
   }
 };
 </script>
@@ -409,53 +452,76 @@ export default {
 <style>
 .map-weather-container {
   display: grid;
-  grid-template-columns: 1fr 1fr; /* 将屏幕分为两列 */
+  grid-template-columns: 1fr 1fr;
+  /* 将屏幕分为两列 */
 }
+
 .map {
   /* position: relative; */
-  grid-column: 1 / 2; /* 将map容器放在第一列 */
+  grid-column: 1 / 2;
+  /* 将map容器放在第一列 */
   display: flex;
   width: 97%;
   height: 950px;
 }
+
 .zoom-controls {
   position: absolute;
   top: 10px;
   left: 10px;
   z-index: 9999;
 }
+
 .weather-container {
   /* position: absolute; */
   /* display: flex; */
-  grid-column: 2 / 3; /* 将weather-container容器放在第二列 */
+  grid-column: 2 / 3;
+  /* 将weather-container容器放在第二列 */
   width: 96%;
   height: 283px;
   top: 10px;
   left: 10px;
   z-index: 9999;
-  background-color: #b0e2ff; /* 设置背景颜色为浅蓝色 */
-  border-radius: 10px; /* 设置圆角边框半径为10px */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 设置阴影效果 */
+  background-color: #b0e2ff;
+  /* 设置背景颜色为浅蓝色 */
+  border-radius: 10px;
+  /* 设置圆角边框半径为10px */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  /* 设置阴影效果 */
   /* 添加其他样式 */
 }
+
 .weather-header {
   margin-left: 28px;
   margin-right: 28px;
 }
+
 .weather-details {
-  grid-column: 1 / 2; /* 将details容器放在第一列 */
+  grid-column: 1 / 2;
+  /* 将details容器放在第一列 */
   margin-left: 28px;
 }
+
 .weather-details-container {
   display: grid;
-  grid-template-columns: 1fr 3fr; /* 将屏幕分为四份，第一列占据一个份额，第二列占据三个份额 */
+  grid-template-columns: 1fr 3fr;
+  /* 将屏幕分为四份，第一列占据一个份额，第二列占据三个份额 */
 }
-.weather-dialog-box{
+
+.weather-dialog-box {
   width: 94%;
-  height:110px;
-  margin-top:10px;
+  height: 110px;
+  margin-top: 10px;
   background-color: whitesmoke;
-  border-radius:6px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 设置阴影效果 */
+  border-radius: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  /* 设置阴影效果 */
+  padding: 10px;
+  overflow: auto;
+  max-height: 100px;
+  /* 设置最大高度，超过该高度将显示滚动条 */
+}
+.dialog-content {
+  white-space: pre-wrap; /* 处理换行符等空白字符 */
 }
 </style>
