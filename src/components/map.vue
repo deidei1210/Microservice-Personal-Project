@@ -1,42 +1,53 @@
 <template>
-  <!-- 用于显示地图 -->
-  <div class="map">
-    <baidu-map
-      class="map"
-      :center="{ lng: 121.474, lat: 31.23 }"
-      :zoom="zoom"
-      @click="handleMapClick"
-    >
-      <!-- 给特殊地点加上一些标注和说明 -->
-      <bm-marker
-        v-for="(marker, index) in markers"
-        :key="index"
-        :position="marker.position"
-        :dragging="false"
-        @click="toggleMarkerAnimation(index)"
+  <div class="map-weather-container">
+    <!-- 用于显示地图 -->
+    <div class="map">
+      <baidu-map
+        class="map"
+        :center="{ lng: 121.474, lat: 31.23 }"
+        :zoom="zoom"
+        @click="handleMapClick"
       >
-        <bm-label
-          :content="marker.content"
-          :labelStyle="{ color: 'red', fontSize: '15px' }"
-          :offset="{ width: -35, height: 30 }"
-        ></bm-label>
-      </bm-marker>
+        <!-- 给特殊地点加上一些标注和说明 -->
+        <bm-marker
+          v-for="(marker, index) in markers"
+          :key="index"
+          :position="marker.position"
+          :dragging="false"
+          @click="handleMarkerClick(marker, index)"
+        >
+          <bm-label
+            :content="marker.content"
+            :labelStyle="{ color: 'red', fontSize: '15px' }"
+            :offset="{ width: -35, height: 30 }"
+          ></bm-label>
+        </bm-marker>
 
-      <div class="zoom-controls">
-        <button @click="zoomIn">放大</button>
-        <button @click="zoomOut">缩小</button>
+        <div class="zoom-controls">
+          <button @click="zoomIn">放大</button>
+          <button @click="zoomOut">缩小</button>
+        </div>
+      </baidu-map>
+    </div>
+
+    <!-- 用于显示天气 -->
+    <div class="weather-container" v-if="weatherData">
+      <div class="weather-header">
+        <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
+          {{ weatherData.lives[0].city }}实时天气
+          <span style="color: #aaa; font-size: 16px; font-weight: normal">
+            {{ weatherData.lives[0].reporttime }}
+          </span>
+        </p>
       </div>
-    </baidu-map>
-  </div>
-
-  <!-- 用于显示天气 -->
-  <div class="weather-container" v-if="weatherData">
-    <p>{{ weatherData.lives[0].city }}实时天气</p>
-    <p>温度：{{ weatherData.lives[0].temperature }}°C</p>
-    <p>天气：{{ weatherData.lives[0].weather }}</p>
-    <p>湿度：{{ weatherData.lives[0].humidity }}%</p>
-    <p>风向：{{ weatherData.lives[0].winddirection }}风</p>
-    <p>风力：{{ weatherData.lives[0].windpower }}级</p>
+      <div class="weather-details">
+        <p>温度🌡️：{{ weatherData.lives[0].temperature }}°C</p>
+        <p>天气☁️：{{ weatherData.lives[0].weather }}</p>
+        <p>湿度💧：{{ weatherData.lives[0].humidity }}%</p>
+        <p>风向🌬：{{ weatherData.lives[0].winddirection }}风</p>
+        <p>风力💨：{{ weatherData.lives[0].windpower }}级</p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -55,7 +66,6 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 // import { Configuration, OpenAIApi } from "openai"; // 根据实际情况调整库的导入路径
 import OpenAI from "openai";
-
 export default {
   components: {
     BaiduMap,
@@ -245,9 +255,9 @@ export default {
   },
   created() {
     this.getWeatherData();
-    this.searchWiki("上海");
+    // this.searchWiki("上海");
     console.log(this.weatherData);
-    this.initGPT3();
+    // this.initGPT3();
   },
   mounted() {
     this.mapInstance = this.$refs.map ? this.$refs.map.getMap() : null;
@@ -309,7 +319,7 @@ export default {
             action: "query",
             generator: "search",
             gsrnamespace: 0,
-            gsrlimit: 10,
+            gsrlimit: 5,
             prop: "pageimages|extracts",
             pilimit: "max",
             exintro: true,
@@ -317,49 +327,59 @@ export default {
             exsentences: 1,
             exlimit: "max",
             origin: "*",
-            gsrsearch: "上海南京东路",
+            gsrsearch: keyword,
           },
         });
         console.log(response.data.query.pages);
+        // var href="http://en.wikipedia.org/wiki/"+encodeURIComponent(response.data.query.pages[0].title)
+        // console.log(href)
       } catch (error) {
         console.error("Error:", error);
       }
     },
-    //点击标记物之后标记开始跳动
-    toggleMarkerAnimation(index) {
-      if (!this.mapInstance) return; // 地图未初始化，不进行操作
-
-      this.selectedMarkerIndex = index; // 更新选中的标记索引
-
-      this.markers.forEach((marker, i) => {
-        if (i === index) {
-          marker.marker.setAnimation(BMAP_ANIMATION_BOUNCE); // 设置BOUNCE动画
-        } else {
-          marker.marker.setAnimation(null); // 取消动画
-        }
-      });
+    handleMarkerClick(marker, index) {
+      // const details = marker.name; // 假设标记对象中有一个属性 name 存储地点名称
+      console.log("点击了" + index);
+      const details = this.markers[index].content;
+      console.log(details);
+      //调用Wiki的接口
+      var href = this.searchWiki(details);
+      //调用GPT接口
+      this.initGPT3(details);
     },
     async initGPT3(details) {
-      const API_KEY = "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"; //输入API Key
+      const API_KEY = "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"; //输入API Key
       const openai = new OpenAI({
         apiKey: API_KEY,
         dangerouslyAllowBrowser: true,
       });
-
+      console.log("正在生成介绍" + details + "的信息");
       const chatCompletion = await openai.chat.completions.create({
-        messages: [{ role: "user", content: `你好，请问可以给我介绍一下上海的 ${details} 吗？用200个字概括！`  }],
+        messages: [
+          {
+            role: "user",
+            content: `你好，请问可以给我介绍一下上海的 ${details} 吗？用200个字概括！`,
+          },
+        ],
         model: "gpt-3.5-turbo",
       });
       console.log(chatCompletion);
-      console.log(chatCompletion.choices[0].message.content)
+      console.log(chatCompletion.choices[0].message.content);
     },
   },
 };
 </script>
 
 <style>
+.map-weather-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* 将屏幕分为两列 */
+}
 .map {
-  width: 70%;
+  /* position: relative; */
+  grid-column: 1 / 2; /* 将map容器放在第一列 */
+  display: flex;
+  width: 97%;
   height: 950px;
 }
 .zoom-controls {
@@ -369,13 +389,24 @@ export default {
   z-index: 9999;
 }
 .weather-container {
-  position: absolute;
+  /* position: absolute; */
+  /* display: flex; */
+  grid-column: 2 / 3; /* 将weather-container容器放在第二列 */
+  width: 96%;
+  height: 283px;
   top: 10px;
-  right: 10px;
+  left: 10px;
   z-index: 9999;
   background-color: #b0e2ff; /* 设置背景颜色为浅蓝色 */
   border-radius: 10px; /* 设置圆角边框半径为10px */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 设置阴影效果 */
   /* 添加其他样式 */
+}
+.weather-header{
+  margin-left: 28px;
+  margin-right: 28px;
+}
+.weather-details {
+  margin-left: 28px;
 }
 </style>
