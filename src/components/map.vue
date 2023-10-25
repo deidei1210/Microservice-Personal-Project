@@ -25,8 +25,8 @@
         </div>
 
         <!-- 步行路线 -->
-        <bm-walking v-if="planRoute" :start="startPosition" :end="endPosition" location="上海" :auto-viewport="true"
-          :selectFirstResult="true" :panel="true"></bm-walking>
+        <bm-walking v-if="planRoute" :start="startPosition" :end="endPosition" location="上海"
+          :auto-viewport="true" :selectFirstResult="true" :panel="true"></bm-walking>
         <!-- 公交线路查询 -->
         <!-- <bm-bus keyword="123路公交车" :auto-viewport="true" location="上海"></bm-bus> -->
       </baidu-map>
@@ -70,7 +70,24 @@
           </div>
         </div>
       </div>
+      <!-- 对景点的简介 -->
+      <div class="brief-introduction">
+        <!-- 显示wiki部分的title -->
+        <div class="weather-header">
+          <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
+            景点简介📖
+            <span style="color: #aaa; font-size: 16px; font-weight: normal">
+              下面是对“{{ searchPlace }}"的简介
+            </span>
+          </p>
+        </div>
 
+        <!-- 显示搜索结果 -->
+        <div class="searchresult">
+          <div v-html="briefIntro"></div>
+        </div>
+
+      </div>
       <!-- 用于显示维基百科查询结果 -->
       <div class="wiki-search">
         <!-- 显示wiki部分的title -->
@@ -143,6 +160,7 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 // import { Configuration, OpenAIApi } from "openai"; // 根据实际情况调整库的导入路径
 import OpenAI from "openai";
+import Qs from 'qs';
 export default {
   components: {
     BaiduMap,
@@ -335,6 +353,7 @@ export default {
       dialogBox: "点击下面的按钮以获得智能小助手建议～",
       WikiPage: [], // 新添加的空数组
       searchPlace: "上海",
+      briefIntro:"<p>暂时没有对该地点的简介哦～</p>",
 
       //点击获取点击地点的经度和纬度
       clickLat: 31.23,
@@ -357,6 +376,7 @@ export default {
       endPosition: null,
 
       planRoute: false,
+
     };
   },
   watch: {
@@ -493,6 +513,23 @@ export default {
         console.error("Error:", error);
       }
     },
+    //得到景点介绍
+    getBriefIntro(place) {
+      axios({
+        method: 'post',
+        url: 'https://apis.tianapi.com/scenic/index',
+        data: Qs.stringify({ key: '1e12d5d1fb06599d02ef546b73e2c360', word: place }),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      }).then((res) => {
+        if(res.data.code==200)
+          this.briefIntro = res.data.result.list[0].content;
+        else{
+          this.briefIntro="<p>暂时没有对该地点的简介哦～</p>"
+        }
+        console.log(res.data)
+        console.log(res)
+      });
+    },
     handleMarkerClick(marker, index) {
       // const details = marker.name; // 假设标记对象中有一个属性 name 存储地点名称
       console.log("点击了" + index);
@@ -501,6 +538,8 @@ export default {
       this.searchPlace = details;
       //调用Wiki的接口
       var href = this.searchWiki(details);
+      //调用景点介绍的接口
+      this.getBriefIntro(details)
       //调用GPT接口
       // this.initGPT3(details);
     },
@@ -738,5 +777,18 @@ export default {
 
 .route-details {
   margin-left: 20px;
+}
+.brief-introduction{
+  width: 96%;
+  height: 283px;
+  margin-top: 20px;
+  top: 10px;
+  left: 10px;
+  z-index: 9999;
+  background-color: #b0e2ff;
+  /* 设置背景颜色为浅蓝色 */
+  border-radius: 10px;
+  /* 设置圆角边框半径为10px */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 </style>
