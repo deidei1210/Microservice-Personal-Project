@@ -105,18 +105,20 @@
             路线规划🚗
           </p>
         </div>
-        <div>
+        <div class="route-details">
           <div style="display:inline-block;">当前选中地址：{{ clickAddress }}</div>
           <button @click="setStartPlace" style="display:inline-block;margin-left:10px;">设置为起点</button>
           <button @click="setEndPlace" style="display:inline-block;margin-left:10px;">设置为终点</button>
-          <div>起点：<span v-if="startPlace">{{ startPlace }}</span>
+          <div style="margin-top:8px;">起点：<span v-if="startPlace">{{ startPlace }}</span>
             <span v-else>未选择起点</span>
           </div>
-          <div>终点：<span v-if="endPlace">{{ endPlace }}</span>
+          <div style="margin-top:8px;">终点：<span v-if="endPlace">{{ endPlace }}</span>
             <span v-else>未选择终点</span>
           </div>
-          <button @click="PlanRoute">开始规划</button>
-          <button @click="StopPlanRoute">重新设置</button>
+          <div style="margin-top:8px;">
+            <button @click="PlanRoute">开始规划</button>
+            <button @click="StopPlanRoute" style="margin-left:10px;">重新设置</button>
+          </div>
         </div>
       </div>
     </div>
@@ -732,5 +734,9 @@ export default {
   border-radius: 10px;
   /* 设置圆角边框半径为10px */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.route-details {
+  margin-left: 20px;
 }
 </style>
