@@ -25,97 +25,100 @@
         </div>
 
         <!-- 步行路线 -->
-        <bm-walking v-if="planRoute" :start="startPosition" :end="endPosition" location="上海"
-          :auto-viewport="true" :selectFirstResult="true" :panel="true"></bm-walking>
+        <bm-walking v-if="planRoute" :start="startPosition" :end="endPosition" location="上海" :auto-viewport="true"
+          :selectFirstResult="true" :panel="true"></bm-walking>
         <!-- 公交线路查询 -->
         <!-- <bm-bus keyword="123路公交车" :auto-viewport="true" location="上海"></bm-bus> -->
       </baidu-map>
-    </div>
-
-    <!-- 用于显示右边的信息框 -->
-    <div class="info">
-      <!-- 用于显示天气 -->
-      <div class="weather-container" v-if="weatherData">
-        <!-- 显示天气部分的title -->
-        <div class="weather-header">
-          <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
-            {{ weatherData.lives[0].city }}实时天气☁️
-            <span style="color: #aaa; font-size: 16px; font-weight: normal">
-              {{ weatherData.lives[0].reporttime }}
-            </span>
-          </p>
-        </div>
-        <!-- 天气的具体信息+出行建议 -->
-        <div class="weather-details-container">
-          <!-- 显示天气的具体信息 -->
-          <div class="weather-details">
-            <p>温度🌡️：{{ weatherData.lives[0].temperature }}°C</p>
-            <p>天气☁️：{{ weatherData.lives[0].weather }}</p>
-            <p>湿度💧：{{ weatherData.lives[0].humidity }}%</p>
-            <p>风向🌬：{{ weatherData.lives[0].winddirection }}风</p>
-            <p>风力💨：{{ weatherData.lives[0].windpower }}级</p>
+      <!-- 用于显示右边的信息框 -->
+      <div class="info">
+        <!-- 用于显示天气 -->
+        <div class="weather-container" v-if="weatherData">
+          <!-- 显示天气部分的title -->
+          <div class="weather-header">
+            <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
+              {{ weatherData.lives[0].city }}实时天气☁️
+              <span style="color: #d4d3d3; font-size: 16px; font-weight: normal">
+                {{ weatherData.lives[0].reporttime }}
+              </span>
+            </p>
           </div>
-          <!-- 显示具体的出行建议 -->
-          <div>
-            <!-- title -->
-            <div style="font-size: 18px; font-weight: bold;">出行智能小助手</div>
-            <div class="weather-dialog-box">
-              <div class="dialog-content">{{ dialogBox }}</div>
+          <!-- 天气的具体信息+出行建议 -->
+          <div class="weather-details-container">
+            <!-- 显示天气的具体信息 -->
+            <div class="weather-details">
+              <p>温度🌡️：{{ weatherData.lives[0].temperature }}°C</p>
+              <p>天气☁️：{{ weatherData.lives[0].weather }}</p>
+              <p>湿度💧：{{ weatherData.lives[0].humidity }}%</p>
+              <p>风向🌬：{{ weatherData.lives[0].winddirection }}风</p>
+              <p>风力💨：{{ weatherData.lives[0].windpower }}级</p>
             </div>
-            <!-- 添加按钮 -->
-            <button id="dress-advice-btn" @click="getDressAdvice">穿衣建议</button>
-            <button id="travel-advice-btn" @click="getTravelAdvice">出行建议</button>
-            <button id="weather-summary-btn" @click="getWeatherSummary">天气概述</button>
-            <!-- 对话框 -->
+            <!-- 显示具体的出行建议 -->
+            <div>
+              <!-- title -->
+              <div style="font-size: 18px; font-weight: bold;">出行智能小助手🤖️</div>
+              <div class="weather-dialog-box">
+                <div class="dialog-content">{{ dialogBox }}</div>
+              </div>
+              <!-- 添加按钮 -->
+              <button id="dress-advice-btn" @click="getDressAdvice">穿衣建议</button>
+              <button id="travel-advice-btn" @click="getTravelAdvice">出行建议</button>
+              <button id="weather-summary-btn" @click="getWeatherSummary">天气概述</button>
+              <!-- 对话框 -->
+            </div>
           </div>
-        </div>
-      </div>
-      <!-- 对景点的简介 -->
-      <div class="brief-introduction">
-        <!-- 显示wiki部分的title -->
-        <div class="weather-header">
-          <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
-            景点简介📖
-            <span style="color: #aaa; font-size: 16px; font-weight: normal">
-              下面是对“{{ searchPlace }}"的简介
-            </span>
-          </p>
-        </div>
+          <!-- 由于诗句的api一天内是有限额的，所以这边暂且注释掉，到时候演示和提交代码的时候别忘了放开注释 -->
+          <!-- <div class="poem">{{ poem.content }} ———— {{ poem.author }}《{{poem.source}}》</div> -->
+          <div class="poem">"黄河远上白云间，一片孤城万仞山。" ———— 白居易《登黄鹤楼》</div>
 
-        <!-- 显示搜索结果 -->
-        <div class="searchresult">
-          <div v-html="briefIntro"></div>
         </div>
+        <!-- 对景点的简介 -->
+        <div class="brief-introduction">
+          <!-- 显示wiki部分的title -->
+          <div class="weather-header">
+            <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
+              景点简介📖
+              <span style="color: #aaa; font-size: 16px; font-weight: normal">
+                下面是对“{{ searchPlace }}"的简介
+              </span>
+            </p>
+          </div>
 
-      </div>
-      <!-- 用于显示维基百科查询结果 -->
-      <div class="wiki-search">
-        <!-- 显示wiki部分的title -->
-        <div class="weather-header">
-          <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
-            景点介绍百科🔍
-            <span style="color: #aaa; font-size: 16px; font-weight: normal">
-              下面是对“{{ searchPlace }}"的搜索结果
-            </span>
-          </p>
+          <!-- 显示搜索结果 -->
+          <div class="briefintro-searchresult">
+            <div v-html="briefIntro"></div>
+          </div>
+
         </div>
+        <!-- 用于显示维基百科查询结果 -->
+        <div class="wiki-search">
+          <!-- 显示wiki部分的title -->
+          <div class="weather-header">
+            <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
+              景点wiki百科🔍
+              <span style="color: #aaa; font-size: 16px; font-weight: normal">
+                下面是对“{{ searchPlace }}"的搜索结果
+              </span>
+            </p>
+          </div>
 
-        <!-- 显示搜索结果 -->
-        <div class="searchresult">
-          <div v-for="page in WikiPage" :key="page.title">
-            <div class="page-item">
-              <img v-if="page.thumbnail && page.thumbnail.source" :src="page.thumbnail.source" :alt="page.title" />
-              <div class="page-content">
-                <a :href="page.url" target="_blank">{{ page.title }}</a>
-                <p style="font-size: small;">{{ page.extract }}</p>
+          <!-- 显示搜索结果 -->
+          <div class="searchresult">
+            <div v-for="page in WikiPage" :key="page.title">
+              <div class="page-item">
+                <img v-if="page.thumbnail && page.thumbnail.source" :src="page.thumbnail.source" :alt="page.title" />
+                <div class="page-content">
+                  <a :href="page.url" target="_blank" style="color:crimson;">{{ page.title }}</a>
+                  <p style="font-size: small;">{{ page.extract }}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
+      </div>
       <!-- 地图导航 -->
-      <div class="guide-container">
+      <div class="guide-container info">
         <!-- 显示wiki部分的title -->
         <div class="weather-header">
           <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
@@ -138,7 +141,9 @@
           </div>
         </div>
       </div>
+
     </div>
+
   </div>
 </template>
 
@@ -353,7 +358,8 @@ export default {
       dialogBox: "点击下面的按钮以获得智能小助手建议～",
       WikiPage: [], // 新添加的空数组
       searchPlace: "上海",
-      briefIntro:"<p>暂时没有对该地点的简介哦～</p>",
+      briefIntro: "<p>暂时没有对该地点的简介哦～</p>",
+      poem:"",
 
       //点击获取点击地点的经度和纬度
       clickLat: 31.23,
@@ -388,6 +394,8 @@ export default {
   },
   created() {
     this.getWeatherData();
+    // if(this.weatherData!=null)
+      // this.getWeatherPoem();
   },
 
   mounted() {
@@ -473,6 +481,20 @@ export default {
           console.error(error);
         });
     },
+    getWeatherPoem() {
+
+      axios({
+        method: 'post',
+        url: 'https://apis.tianapi.com/tianqishiju/index',
+        data: Qs.stringify({ key: '1e12d5d1fb06599d02ef546b73e2c360',tqtype:2}),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      }).then(res => {
+        // this.tianapi_data = res.data
+        console.log(res.data)
+        this.poem=res.data.result
+      }
+      )
+    },
     //调用Wiki百科API
     async searchWiki(keyword) {
       try {
@@ -521,10 +543,10 @@ export default {
         data: Qs.stringify({ key: '1e12d5d1fb06599d02ef546b73e2c360', word: place }),
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       }).then((res) => {
-        if(res.data.code==200)
+        if (res.data.code == 200)
           this.briefIntro = res.data.result.list[0].content;
-        else{
-          this.briefIntro="<p>暂时没有对该地点的简介哦～</p>"
+        else {
+          this.briefIntro = "<p>暂时没有对该地点的简介哦～</p>"
         }
         console.log(res.data)
         console.log(res)
@@ -634,17 +656,18 @@ export default {
 
 <style>
 .map-weather-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* display: grid; */
+  /* grid-template-columns: 1fr 1fr; */
   /* 将屏幕分为两列 */
+  width: 100%;
 }
 
 .map {
   /* position: relative; */
-  grid-column: 1 / 2;
+  /* grid-column: 1 / 2; */
   /* 将map容器放在第一列 */
   display: flex;
-  width: 97%;
+  width: 100%;
   height: 950px;
 }
 
@@ -656,7 +679,13 @@ export default {
 }
 
 .info {
-  grid-column: 2 / 3;
+  /* grid-column: 2 / 3; */
+  position: absolute;
+  right: 4px;
+  width: 750px;
+  overflow: auto;
+  max-height: 950px;
+  /* 设置最大高度，根据需要进行调整 */
 }
 
 .weather-container {
@@ -664,17 +693,18 @@ export default {
   /* display: flex; */
   /* 将weather-container容器放在第二列 */
   width: 96%;
-  height: 283px;
+  height: 314px;
   top: 10px;
   left: 10px;
   z-index: 9999;
-  background-color: #b0e2ff;
+  background-color: #04131b9e;
   /* 设置背景颜色为浅蓝色 */
   border-radius: 10px;
   /* 设置圆角边框半径为10px */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.233);
   /* 设置阴影效果 */
   /* 添加其他样式 */
+  color: #fff;
 }
 
 .weather-header {
@@ -710,26 +740,30 @@ export default {
 
 .dialog-content {
   white-space: pre-wrap;
+  color: rgb(34, 33, 33);
   /* 处理换行符等空白字符 */
 }
 
 .wiki-search {
   width: 96%;
-  height: 283px;
+  height: 360px;
   margin-top: 20px;
   top: 10px;
   left: 10px;
   z-index: 9999;
-  background-color: #b0e2ff;
+  background-color: #04131b9e;
   /* 设置背景颜色为浅蓝色 */
   border-radius: 10px;
   /* 设置圆角边框半径为10px */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.233);
+  /* 设置阴影效果 */
+  /* 添加其他样式 */
+  color: #fff;
 
 }
 
 .searchresult {
-  max-height: 210px;
+  max-height: 300px;
   /* 设置最大高度 */
   overflow: auto;
   /* 当内容超出高度时显示滚动条 */
@@ -762,33 +796,52 @@ export default {
 }
 
 .guide-container {
-  width: 96%;
-  height: 283px;
+  width: 400px;
+  height: 260px;
   margin-top: 20px;
-  top: 10px;
+  top: 550px;
   left: 10px;
   z-index: 9999;
-  background-color: #b0e2ff;
+  background-color: #04131b9e;
   /* 设置背景颜色为浅蓝色 */
   border-radius: 10px;
   /* 设置圆角边框半径为10px */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.233);
+  /* 设置阴影效果 */
+  /* 添加其他样式 */
+  color: #fff;
 }
 
 .route-details {
   margin-left: 20px;
 }
-.brief-introduction{
+
+.brief-introduction {
   width: 96%;
   height: 283px;
   margin-top: 20px;
   top: 10px;
   left: 10px;
   z-index: 9999;
-  background-color: #b0e2ff;
+  background-color: #04131b9e;
   /* 设置背景颜色为浅蓝色 */
   border-radius: 10px;
   /* 设置圆角边框半径为10px */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.233);
+  /* 设置阴影效果 */
+  /* 添加其他样式 */
+  color: #fff;
+}
+
+.briefintro-searchresult {
+  max-height: 200px;
+  /* 设置最大高度 */
+  overflow: auto;
+  /* 当内容超出高度时显示滚动条 */
+  margin: 0px 20px 0px 20px;
+
+}
+.poem{
+  margin-left:23px;
 }
 </style>
