@@ -68,7 +68,7 @@
             </div>
           </div>
           <!-- 由于诗句的api一天内是有限额的，所以这边暂且注释掉，到时候演示和提交代码的时候别忘了放开注释 -->
-          <div class="poem">{{ poem.content }} ———— {{ poem.author }}《{{poem.source}}》</div>
+          <div class="poem">{{ poem.content }} ———— {{ poem.author }}《{{ poem.source }}》</div>
           <!-- <div class="poem">"黄河远上白云间，一片孤城万仞山。" ———— 白居易《登黄鹤楼》</div> -->
 
           <!-- 显示一周的天气走向 -->
@@ -76,6 +76,49 @@
             <div ref="weatherChart" style="width: 600px; height: 400px;margin-left:20px;margin-top: 20px;"></div>
           </div>
         </div>
+
+        <!-- 对节假日的查询 -->
+        <div class="brief-introduction">
+          <!-- 显示wiki部分的title -->
+          <div class="weather-header">
+            <p style="font-size: 24px; font-weight: bold; border-bottom: 1px solid #ccc">
+              节假日查询📅
+            </p>
+          </div>
+          <!-- 下拉选择框 -->
+          <div style="margin-left:29px;">
+            <select v-model="selectedMonth" style="margin-right:10px;">
+              <option value="1">一月</option>
+              <option value="2">二月</option>
+              <option value="3">三月</option>
+              <option value="4">四月</option>
+              <option value="5">五月</option>
+              <option value="6">六月</option>
+              <option value="7">七月</option>
+              <option value="8">八月</option>
+              <option value="9">九月</option>
+              <option value="10">十月</option>
+              <option value="11">十一月</option>
+              <option value="12">十二月</option>
+              <!-- 添加更多的月份选项 -->
+            </select>
+            <button @click="getHoliday(selectedMonth)">查询节假日</button>
+          </div>
+          <!-- 显示搜索结果 -->
+          <div class="briefintro-searchresult">
+            <ul>
+              <li v-for="item in holiday" :key="index">
+                <p style="color:gold;">{{ item.date }} {{ item.cnweekday }} {{ item.name }}</p>
+                <p style="color:#ccc;font-size:small;">{{ item.lunaryear }} {{ item.lunarmonth }} {{ item.lunarday }}</p>
+                <p>{{ item.tip }}</p>
+              </li>
+            </ul>
+          </div>
+
+        </div>
+
+
+
         <!-- 对景点的简介 -->
         <div class="brief-introduction">
           <!-- 显示wiki部分的title -->
@@ -391,6 +434,9 @@ export default {
 
       planRoute: false,
       weatherWeek: null,
+      dressAdvice: "",
+      holiday: "",
+      selectedMonth: new Date().getMonth() + 1 // 用户选择的月份，默认为当前月份
     };
   },
   watch: {
@@ -405,6 +451,7 @@ export default {
     // if(this.weatherData!=null)
     this.getWeatherPoem();
     this.getWeekWeather();
+    this.getHoliday(10)
   },
 
   mounted() {
@@ -516,6 +563,7 @@ export default {
         data: Qs.stringify({ key: '1e12d5d1fb06599d02ef546b73e2c360', city: '101020100', type: '7' }),
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       }).then(res => {
+        this.dressAdvice = res.data.result.list[0].tips
         this.weatherWeek = res.data.result.list.map(item => ({
           week: item.week,
           date: item.date,
@@ -626,7 +674,7 @@ export default {
               color: '#ef8183', // 设置折线颜色为红色
               width: 4 // 设置折线线宽为3
             },
-            itemStyle:{
+            itemStyle: {
               color: '#ef8183' // 设置折线颜色为红色
             }
           },
@@ -652,7 +700,7 @@ export default {
               color: '#699ed4', // 设置折线颜色为红色
               width: 4 // 设置折线线宽为3
             },
-            itemStyle:{
+            itemStyle: {
               color: '#699ed4' // 设置折线颜色为红色
             }
           },
@@ -733,6 +781,28 @@ export default {
         console.log(res)
       });
     },
+    //调用查询节假日的接口，得到这个月的节假日
+    getHoliday(month) {
+      // console.log(this.selectedMonth)
+      // 判断月份是否为个位数，如果是则在前面添加一个零
+      var formattedMonth = month < 10 ? '0' + month : month;
+      var Date = '2023-' + formattedMonth;
+      console.log(Date);
+      axios({
+        method: 'post',
+        url: 'https://apis.tianapi.com/jiejiari/index',
+        data: Qs.stringify({ key: '1e12d5d1fb06599d02ef546b73e2c360', date: Date, type: 2 }),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      }).then(res => {
+        // this.tianapi_data = res.data;
+        // console.log(res.data.result.list);
+        // 提取isnotwork为1的项并存储到data的holiday变量中
+        this.holiday = res.data.result.list.filter(item => item.isnotwork === 1);
+        console.log(this.holiday)
+      });
+    },
+
+
     handleMarkerClick(marker, index) {
       // const details = marker.name; // 假设标记对象中有一个属性 name 存储地点名称
       console.log("点击了" + index);
@@ -759,7 +829,7 @@ export default {
         this.weatherData.lives[0].weather +
         "，风力：" +
         this.weatherData.lives[0].windpower +
-        "，请问可以给出穿衣建议吗？比如说今天适合穿什么样的衣服？比如如果温度高于25度就适合穿短袖，如果温度在17到25之间左右就可以穿衬衫等等（用可爱俏皮的语句直接生成一段话，50到80字左右，不要列出一点一点的，也不要太长）";
+        "，请问可以给出穿衣建议吗？可以把下面这段话扩写一下变得更加活泼俏皮：" + this.dressAdvice + ",用可爱俏皮的语句直接生成一段话，50到80字左右，不要列出一点一点的，也不要太长）";
       console.log(details);
       this.initGPT3(details, 1);
       this.showResponse();
@@ -804,7 +874,7 @@ export default {
     },
 
     async initGPT3(details, choice) {
-      const API_KEY = "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"; //输入API Key
+      const API_KEY = "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"; //输入API Key
       const openai = new OpenAI({
         apiKey: API_KEY,
         dangerouslyAllowBrowser: true,
