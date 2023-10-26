@@ -68,8 +68,8 @@
             </div>
           </div>
           <!-- 由于诗句的api一天内是有限额的，所以这边暂且注释掉，到时候演示和提交代码的时候别忘了放开注释 -->
-          <!-- <div class="poem">{{ poem.content }} ———— {{ poem.author }}《{{poem.source}}》</div> -->
-          <div class="poem">"黄河远上白云间，一片孤城万仞山。" ———— 白居易《登黄鹤楼》</div>
+          <div class="poem">{{ poem.content }} ———— {{ poem.author }}《{{poem.source}}》</div>
+          <!-- <div class="poem">"黄河远上白云间，一片孤城万仞山。" ———— 白居易《登黄鹤楼》</div> -->
 
           <!-- 显示一周的天气走向 -->
           <div>
@@ -403,7 +403,7 @@ export default {
   created() {
     this.getWeatherData();
     // if(this.weatherData!=null)
-    // this.getWeatherPoem();
+    this.getWeatherPoem();
     this.getWeekWeather();
   },
 
