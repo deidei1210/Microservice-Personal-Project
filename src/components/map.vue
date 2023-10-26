@@ -71,6 +71,10 @@
           <!-- <div class="poem">{{ poem.content }} ———— {{ poem.author }}《{{poem.source}}》</div> -->
           <div class="poem">"黄河远上白云间，一片孤城万仞山。" ———— 白居易《登黄鹤楼》</div>
 
+          <!-- 显示一周的天气走向 -->
+          <div>
+            <div ref="weatherChart" style="width: 600px; height: 400px;margin-left:20px;margin-top: 20px;"></div>
+          </div>
         </div>
         <!-- 对景点的简介 -->
         <div class="brief-introduction">
@@ -108,7 +112,8 @@
               <div class="page-item">
                 <img v-if="page.thumbnail && page.thumbnail.source" :src="page.thumbnail.source" :alt="page.title" />
                 <div class="page-content">
-                  <a :href="page.url" target="_blank" style="color:crimson;">{{ page.title }}</a>
+                  <a :href="page.url" target="_blank" style="color:rgb(221, 110, 132);font-weight: bold;">{{ page.title
+                  }}</a>
                   <p style="font-size: small;">{{ page.extract }}</p>
                 </div>
               </div>
@@ -147,7 +152,7 @@
   </div>
 </template>
 
-<script>
+<script  defer="true">
 /* eslint-disable */
 import {
   BaiduMap,
@@ -166,6 +171,8 @@ import axios from "axios";
 // import { Configuration, OpenAIApi } from "openai"; // 根据实际情况调整库的导入路径
 import OpenAI from "openai";
 import Qs from 'qs';
+import * as echarts from 'echarts';
+
 export default {
   components: {
     BaiduMap,
@@ -177,7 +184,8 @@ export default {
     BmLabel,
     BmLocalSearch,
     BmCircle,
-    BmBus
+    BmBus,
+    echarts
   },
 
   data() {
@@ -359,7 +367,7 @@ export default {
       WikiPage: [], // 新添加的空数组
       searchPlace: "上海",
       briefIntro: "<p>暂时没有对该地点的简介哦～</p>",
-      poem:"",
+      poem: "",
 
       //点击获取点击地点的经度和纬度
       clickLat: 31.23,
@@ -382,7 +390,7 @@ export default {
       endPosition: null,
 
       planRoute: false,
-
+      weatherWeek: null,
     };
   },
   watch: {
@@ -395,7 +403,8 @@ export default {
   created() {
     this.getWeatherData();
     // if(this.weatherData!=null)
-      // this.getWeatherPoem();
+    // this.getWeatherPoem();
+    this.getWeekWeather();
   },
 
   mounted() {
@@ -464,6 +473,7 @@ export default {
       this.startPlace = ""
       this.endPlace = ""
     },
+
     //调用天气api，已经可以调取成功
     getWeatherData() {
       const key = "	3f6157ccb2e4ec191a030932e211ffaa"; // 将 `your key` 替换成你的高德开发者key
@@ -481,20 +491,191 @@ export default {
           console.error(error);
         });
     },
+
+    //调用天气诗句api
     getWeatherPoem() {
 
       axios({
         method: 'post',
         url: 'https://apis.tianapi.com/tianqishiju/index',
-        data: Qs.stringify({ key: '1e12d5d1fb06599d02ef546b73e2c360',tqtype:2}),
+        data: Qs.stringify({ key: '1e12d5d1fb06599d02ef546b73e2c360', tqtype: 2 }),
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
       }).then(res => {
         // this.tianapi_data = res.data
         console.log(res.data)
-        this.poem=res.data.result
+        this.poem = res.data.result
       }
       )
     },
+
+    //得到一周的天气
+    getWeekWeather() {
+      axios({
+        method: 'post',
+        url: 'https://apis.tianapi.com/tianqi/index',
+        data: Qs.stringify({ key: '1e12d5d1fb06599d02ef546b73e2c360', city: '101020100', type: '7' }),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      }).then(res => {
+        this.weatherWeek = res.data.result.list.map(item => ({
+          week: item.week,
+          date: item.date,
+          lowest: parseFloat(item.lowest),
+          highest: parseFloat(item.highest),
+          weather: item.weather,
+          sunrise: item.sunrise,
+          sunset: item.sunset,
+        }));
+        console.log(this.weatherWeek)
+        setTimeout(() => {
+          this.drawChart();
+        }, 200);
+      });
+    },
+    drawChart() {
+      const highestArr = this.weatherWeek.map(item => item.highest);
+      const lowestArr = this.weatherWeek.map(item => item.lowest);
+      const sunriseArr = this.weatherWeek.map(item => item.sunrise);
+      const sunsetArr = this.weatherWeek.map(item => item.sunset);
+      const weatherArr = this.weatherWeek.map(item => item.weather);
+      const weekArr = this.weatherWeek.map(item => item.week);
+
+      const chartDom = this.$refs.weatherChart;
+      const myChart = echarts.init(chartDom);
+
+      var option;
+      option = {
+        title: {
+          text: '一周天气预报☁️',
+          textStyle: {
+            color: '#fff',
+          },
+        },
+        tooltip: {
+          trigger: 'axis',
+          textStyle: {
+            color: 'black',
+          },
+          formatter: function (params) {
+            var tooltipContent = '';
+            var dataIndex = params[0].dataIndex;
+
+            tooltipContent += '日期：' + weekArr[dataIndex] + '<br>';
+            tooltipContent += '最高气温：' + highestArr[dataIndex] + '℃<br>';
+            tooltipContent += '最低气温：' + lowestArr[dataIndex] + '℃<br>';
+            tooltipContent += '日出时间：' + sunriseArr[dataIndex] + '<br>';
+            tooltipContent += '日落时间：' + sunsetArr[dataIndex] + '<br>';
+            tooltipContent += '天气状况：' + weatherArr[dataIndex] + '<br>';
+
+            return tooltipContent;
+          }
+        },
+        legend: {
+          data: ['highest-temperature', 'lowest-temperature'],
+          textStyle: {
+            color: '#fff',
+          },
+        },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '3%',
+          containLabel: true,
+        },
+        toolbox: {
+          feature: {
+            saveAsImage: {},
+          },
+        },
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: weekArr,
+          axisLabel: {
+            textStyle: {
+              color: '#fff',
+            },
+          },
+        },
+        yAxis: {
+          type: 'value',
+          axisLabel: {
+            textStyle: {
+              color: '#fff',
+            },
+          },
+        },
+        series: [
+          {
+            name: 'highest-temperature',
+            type: 'line',
+            data: highestArr,
+            markPoint: {
+              data: [
+                { type: 'max', name: 'Max' },
+                { type: 'min', name: 'Min' }],
+              label: {
+                show: true,
+                color: '#fff',
+                fontSize: 12,
+              }
+            },
+            markLine: {
+              data: [{ type: 'average', name: 'Avg' }]
+            },
+            lineStyle: {
+              color: '#ef8183', // 设置折线颜色为红色
+              width: 4 // 设置折线线宽为3
+            },
+            itemStyle:{
+              color: '#ef8183' // 设置折线颜色为红色
+            }
+          },
+          {
+            name: 'lowest-temperature',
+            type: 'line',
+            data: lowestArr,
+            markPoint: {
+              data: [
+                { type: 'max', name: 'Max' },
+                { type: 'min', name: 'Min' }
+              ],
+              label: {
+                show: true,
+                color: '#fff',
+                fontSize: 12,
+              }
+            },
+            markLine: {
+              data: [{ type: 'average', name: 'Avg' }]
+            },
+            lineStyle: {
+              color: '#699ed4', // 设置折线颜色为红色
+              width: 4 // 设置折线线宽为3
+            },
+            itemStyle:{
+              color: '#699ed4' // 设置折线颜色为红色
+            }
+          },
+          {
+            name: 'weather',
+            type: 'scatter',
+            data: weatherArr,
+            symbolSize: 10,
+            itemStyle: {
+              color: '#fff',
+            },
+            tooltip: {
+              formatter: function (params) {
+                return '天气状况：' + params.value;
+              }
+            }
+          }
+        ],
+      };
+
+      myChart.setOption(option);
+    },
+
     //调用Wiki百科API
     async searchWiki(keyword) {
       try {
@@ -693,7 +874,7 @@ export default {
   /* display: flex; */
   /* 将weather-container容器放在第二列 */
   width: 96%;
-  height: 314px;
+  height: 783px;
   top: 10px;
   left: 10px;
   z-index: 9999;
@@ -841,7 +1022,10 @@ export default {
   margin: 0px 20px 0px 20px;
 
 }
-.poem{
-  margin-left:23px;
+
+.poem {
+  margin-left: 23px;
+  font-weight: bold;
+  color: rgb(199, 229, 88);
 }
 </style>
