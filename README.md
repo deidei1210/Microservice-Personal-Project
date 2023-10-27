@@ -6,6 +6,7 @@
 <p align = 'center'>欢迎光临deidei的微服务架构个人项目仓库捏～！🌟</p>
 <p align = 'center'>该仓库中的内容为2023年同济大学软件学院网络方向微服务架构API项目🖊️</p>
 <p align = 'center'>方便自己之后回过来看也希望对大家有所帮助捏！👀</p>
+<p align = 'center'>欢迎大家访问http://120.26.0.232:9999/来查看我的citywalk指南哦～❤️</p>
 
 ---
 
