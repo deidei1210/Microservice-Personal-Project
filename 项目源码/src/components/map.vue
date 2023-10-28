@@ -874,7 +874,7 @@ export default {
     },
 
     async initGPT3(details, choice) {
-      const API_KEY = "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"; //输入API Key
+      const API_KEY = "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"; //输入API Key
       const openai = new OpenAI({
         apiKey: API_KEY,
         dangerouslyAllowBrowser: true,
